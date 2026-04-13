@@ -61,7 +61,12 @@ def run():
     
     model_path = os.path.join(output_dir, '7_rf_model.joblib')
     joblib.dump(rf, model_path)
-    print(f"Saved feature importances and trained model inside {output_dir}.")
+    
+    # Save predictions for Confusion Matrix visual in Step 8
+    preds_df = pd.DataFrame({'y_test': y_test, 'y_pred': y_pred})
+    preds_df.to_csv(os.path.join(output_dir, '7_predictions.csv'), index=False)
+    
+    print(f"Saved feature importances, predictions, and trained model inside {output_dir}.")
 
 if __name__ == "__main__":
     run()

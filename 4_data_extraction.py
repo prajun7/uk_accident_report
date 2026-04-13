@@ -24,8 +24,7 @@ def run():
         'Accident_Severity',
         'Speed_limit', 'Road_Type', 'Light_Conditions', 
         'Weather_Conditions', 'Road_Surface_Conditions',
-        'Time', 'Date', 'Day_of_Week', 'Urban_or_Rural_Area',
-        'Number_of_Vehicles' # Often known context
+        'Time', 'Date', 'Day_of_Week', 'Urban_or_Rural_Area'
     ]
 
     # Check which of these actually exist inside the DataFrame

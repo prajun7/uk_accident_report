@@ -35,7 +35,7 @@ class AccidentSeverityPredictor:
             'Speed_limit', 'Road_Type', 'Light_Conditions', 
             'Weather_Conditions', 'Road_Surface_Conditions', 
             'Day_of_Week', 'Urban_or_Rural_Area', 
-            'Number_of_Vehicles', 'Hour', 'IsNight', 'Month'
+            'Hour', 'IsNight', 'Month'
         ]
         
         # Fill missing features with fallback defaults
@@ -71,7 +71,6 @@ if __name__ == "__main__":
         'Road_Surface_Conditions': 2,
         'Day_of_Week': 6,
         'Urban_or_Rural_Area': 2,
-        'Number_of_Vehicles': 2,
         'Hour': 23,
         'IsNight': 1,
         'Month': 11
@@ -89,7 +88,6 @@ if __name__ == "__main__":
         'Road_Surface_Conditions': 1,
         'Day_of_Week': 2,
         'Urban_or_Rural_Area': 1,
-        'Number_of_Vehicles': 2,
         'Hour': 14,
         'IsNight': 0,
         'Month': 6

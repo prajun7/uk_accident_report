@@ -1,0 +1,21 @@
+Big Data Project: UK Traffic Accident Analysis
+Step 2: Data Identification
+
+We already possess the necessary dataset to address our business question. The data reflects a substantial corpus of historical UK Department for Transport (DfT) Traffic Accident data from 2005 to 2015. 
+
+DATASET STRUCTURE:
+The data is provided in the current environment across three primary CSV files:
+
+1. Accidents0515.csv (~244MB)
+   - Contains core geographic, ambient, and overarching facts about every recorded accident. 
+   - Key attributes: Accident_Index, Accident_Severity (Our Target Variable), Speed_limit, Light_Conditions, Weather_Conditions, Time/Date, Location.
+
+2. Vehicles0515.csv (~206MB)
+   - Details regarding the vehicles involved (Age, type, maneuvers).
+   - Links to accidents via Accident_Index.
+
+3. Casualties0515.csv (~108MB)
+   - Details the demographics and severities of damage down to individual passengers.
+   - Links to accidents via Accident_Index.
+
+Given constraints our hands are largely locked to this dataset, but it is deeply rich enough to fulfill the business case.

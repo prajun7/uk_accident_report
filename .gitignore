@@ -1,0 +1,17 @@
+# Datasets
+*.csv
+!requirements.txt
+
+# Intermediate Pipeline Outputs and ML Models
+output/
+scratch/
+*.png
+*.joblib
+
+# Python Environments and Caches
+venv/
+__pycache__/
+*.pyc
+
+# Local OS Files
+.DS_Store

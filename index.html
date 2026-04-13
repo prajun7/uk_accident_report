@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UK Accident Severity — Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0c1222;
+      --bg-elevated: #121a2e;
+      --surface: rgba(255, 255, 255, 0.04);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #e8edf7;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-dim: rgba(56, 189, 248, 0.15);
+      --danger: #f87171;
+      --ok: #4ade80;
+      --radius: 14px;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, rgba(56, 189, 248, 0.12), transparent),
+        radial-gradient(900px 500px at 100% 0%, rgba(99, 102, 241, 0.1), transparent),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+
+    header {
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.5rem;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 52ch;
+      font-size: 1rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 900px) {
+      .grid-main {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+    }
+
+    .card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .card-header span {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    .heatmap {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0a0f1a;
+    }
+
+    .caption {
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      letter-spacing: 0.02em;
+    }
+
+    select,
+    input[type="number"] {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    select:focus,
+    input[type="number"]:focus {
+      border-color: rgba(56, 189, 248, 0.45);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    .row-2 {
+      display: grid;
+      gap: 1rem;
+    }
+
+    @media (min-width: 520px) {
+      .row-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .toggle input[type="checkbox"] {
+      width: 1.1rem;
+      height: 1.1rem;
+      accent-color: var(--accent);
+    }
+
+    .toggle small {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    button {
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem 1.25rem;
+      cursor: pointer;
+      transition: transform 0.1s, filter 0.15s;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      color: #0b1220;
+    }
+
+    button.secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    button:hover {
+      filter: brightness(1.06);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .result {
+      margin-top: 1rem;
+      padding: 1rem 1.1rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.6);
+      font-size: 0.9rem;
+    }
+
+    .result h3 {
+      margin: 0 0 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .result p {
+      margin: 0.4rem 0;
+      color: var(--muted);
+    }
+
+    .result strong.sev-fatal {
+      color: var(--danger);
+    }
+
+    .result strong.sev-serious {
+      color: #fbbf24;
+    }
+
+    .result strong.sev-slight {
+      color: var(--ok);
+    }
+
+    pre {
+      margin: 0.75rem 0 0;
+      padding: 1rem;
+      border-radius: 8px;
+      background: #070b14;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: #e2e8f0;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.75rem;
+    }
+
+    footer {
+      margin-top: 2.5rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="badge">STATS19 features · Random Forest</div>
+      <h1>Accident severity predictor</h1>
+      <p>
+        Choose road and environment conditions (the same engineered features as in your correlation map), then run a prediction for
+        <strong style="color: #e8edf7">Fatal</strong>, <strong style="color: #e8edf7">Serious</strong>, or <strong style="color: #e8edf7">Slight</strong>
+        severity. Values use UK DfT numeric codes expected by <code style="color: var(--accent)">10_inference.py</code>.
+      </p>
+    </header>
+
+    <div class="grid grid-main">
+      <section class="card">
+        <div class="card-header">
+          <h2>Feature correlation map</h2>
+          <span>Stage: aggregation</span>
+        </div>
+        <div class="card-body">
+          <img
+            class="heatmap"
+            src="output/8_2_correlation_heatmap.png"
+            alt="Engineered feature correlation heatmap: Speed limit, road type, light, weather, surface, day of week, urban/rural, hour, IsNight, month"
+          />
+          <p class="caption">Inputs below match the variables on the heatmap axes.</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Scenario inputs</h2>
+          <span>DfT codes</span>
+        </div>
+        <div class="card-body">
+          <form id="predict-form" novalidate>
+            <div class="field">
+              <label for="Speed_limit">Speed limit (mph)</label>
+              <select id="Speed_limit" name="Speed_limit" required>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30" selected>30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="60">60</option>
+                <option value="70">70</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="Road_Type">Road type</label>
+              <select id="Road_Type" name="Road_Type" required>
+                <option value="1">1 — Roundabout</option>
+                <option value="2">2 — Mini roundabout</option>
+                <option value="3" selected>3 — Single carriageway</option>
+                <option value="6">6 — Dual carriageway</option>
+                <option value="7">7 — Slip road</option>
+                <option value="9">9 — Unknown</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="Light_Conditions">Light conditions</label>
+              <select id="Light_Conditions" name="Light_Conditions" required>
+                <option value="1" selected>1 — Daylight</option>
+                <option value="4">4 — Darkness: lights lit</option>
+                <option value="5">5 — Darkness: lights unlit</option>
+                <option value="6">6 — Darkness: no lighting</option>
+                <option value="7">7 — Darkness: unknown lighting</option>
+              </select>
+            </div>
+
+            <div class="row-2">
+              <div class="field">
+                <label for="Weather_Conditions">Weather</label>
+                <select id="Weather_Conditions" name="Weather_Conditions" required>
+                  <option value="1" selected>1 — Fine / no high winds</option>
+                  <option value="2">2 — Raining / no high winds</option>
+                  <option value="3">3 — Snowing / no high winds</option>
+                  <option value="4">4 — Fine + high winds</option>
+                  <option value="5">5 — Raining + high winds</option>
+                  <option value="6">6 — Snowing + high winds</option>
+                  <option value="7">7 — Fog or mist</option>
+                  <option value="8">8 — Other</option>
+                  <option value="9">9 — Unknown</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="Road_Surface_Conditions">Road surface</label>
+                <select id="Road_Surface_Conditions" name="Road_Surface_Conditions" required>
+                  <option value="1" selected>1 — Dry</option>
+                  <option value="2">2 — Wet / damp</option>
+                  <option value="3">3 — Snow</option>
+                  <option value="4">4 — Frost / ice</option>
+                  <option value="5">5 — Flood (surface water over 3cm)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row-2">
+              <div class="field">
+                <label for="Day_of_Week">Day of week</label>
+                <select id="Day_of_Week" name="Day_of_Week" required>
+                  <option value="1">1 — Sunday</option>
+                  <option value="2">2 — Monday</option>
+                  <option value="3">3 — Tuesday</option>
+                  <option value="4">4 — Wednesday</option>
+                  <option value="5">5 — Thursday</option>
+                  <option value="6" selected>6 — Friday</option>
+                  <option value="7">7 — Saturday</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="Urban_or_Rural_Area">Urban or rural</label>
+                <select id="Urban_or_Rural_Area" name="Urban_or_Rural_Area" required>
+                  <option value="1" selected>1 — Urban</option>
+                  <option value="2">2 — Rural</option>
+                  <option value="3">3 — Unallocated</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row-2">
+              <div class="field">
+                <label for="Hour">Hour (0–23)</label>
+                <input type="number" id="Hour" name="Hour" min="0" max="23" value="14" required />
+              </div>
+              <div class="field">
+                <label for="Month">Month</label>
+                <select id="Month" name="Month" required>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6" selected>June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="toggle">
+                <input type="checkbox" id="isnight-auto" checked />
+                <span>Set <strong>IsNight</strong> automatically from hour (&lt; 6 or ≥ 20)</span>
+              </label>
+              <div class="toggle" style="margin-top: 0.35rem">
+                <input type="checkbox" id="IsNight" name="IsNight" />
+                <span>IsNight (1 = night, 0 = day)</span>
+                <small id="isnight-hint"></small>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="primary">Predict severity</button>
+              <button type="button" class="secondary" id="reset-btn" title="Reset to defaults">Reset</button>
+            </div>
+          </form>
+
+          <div id="result" class="result" hidden>
+            <h3 id="result-title">Prediction</h3>
+            <p id="result-body"></p>
+            <pre id="result-code" hidden></pre>
+            <p class="hint" id="result-hint"></p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      Large models cannot run in the browser; this page can call a local API or show Python you can run with your trained <code>7_rf_model.joblib</code>.
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      /** If you add a small local API, set the full URL here (e.g. http://127.0.0.1:8765/predict). */
+      var PREDICT_URL = "";
+
+      var form = document.getElementById("predict-form");
+      var hourInput = document.getElementById("Hour");
+      var isnightAuto = document.getElementById("isnight-auto");
+      var isnightCheck = document.getElementById("IsNight");
+      var isnightHint = document.getElementById("isnight-hint");
+      var resultEl = document.getElementById("result");
+      var resultTitle = document.getElementById("result-title");
+      var resultBody = document.getElementById("result-body");
+      var resultCode = document.getElementById("result-code");
+      var resultHint = document.getElementById("result-hint");
+      var resetBtn = document.getElementById("reset-btn");
+
+      function hourToIsNight(h) {
+        return h < 6 || h >= 20 ? 1 : 0;
+      }
+
+      function syncIsNightFromHour() {
+        if (!isnightAuto.checked) return;
+        var h = parseInt(hourInput.value, 10);
+        if (Number.isNaN(h)) return;
+        h = Math.max(0, Math.min(23, h));
+        isnightCheck.checked = hourToIsNight(h) === 1;
+        isnightHint.textContent = "(auto from hour)";
+      }
+
+      function setIsNightDisabled(disabled) {
+        isnightCheck.disabled = disabled;
+      }
+
+      isnightAuto.addEventListener("change", function () {
+        setIsNightDisabled(isnightAuto.checked);
+        if (isnightAuto.checked) syncIsNightFromHour();
+        else isnightHint.textContent = "(manual)";
+      });
+
+      hourInput.addEventListener("input", syncIsNightFromHour);
+      setIsNightDisabled(true);
+      syncIsNightFromHour();
+
+      function getPayload() {
+        var hour = parseInt(hourInput.value, 10);
+        if (Number.isNaN(hour)) hour = 12;
+        hour = Math.max(0, Math.min(23, hour));
+
+        var isnight = isnightCheck.checked ? 1 : 0;
+
+        return {
+          Speed_limit: parseInt(document.getElementById("Speed_limit").value, 10),
+          Road_Type: parseInt(document.getElementById("Road_Type").value, 10),
+          Light_Conditions: parseInt(document.getElementById("Light_Conditions").value, 10),
+          Weather_Conditions: parseFloat(document.getElementById("Weather_Conditions").value),
+          Road_Surface_Conditions: parseFloat(document.getElementById("Road_Surface_Conditions").value),
+          Day_of_Week: parseInt(document.getElementById("Day_of_Week").value, 10),
+          Urban_or_Rural_Area: parseInt(document.getElementById("Urban_or_Rural_Area").value, 10),
+          Hour: hour,
+          IsNight: isnight,
+          Month: parseInt(document.getElementById("Month").value, 10),
+        };
+      }
+
+      function severityClass(label) {
+        if (/fatal/i.test(label)) return "sev-fatal";
+        if (/serious/i.test(label)) return "sev-serious";
+        if (/slight/i.test(label)) return "sev-slight";
+        return "";
+      }
+
+      function buildPythonSnippet(p) {
+        return (
+          "import joblib\n" +
+          "import pandas as pd\n" +
+          "\n" +
+          "model = joblib.load(\"output/7_rf_model.joblib\")\n" +
+          "row = pd.DataFrame([{\n" +
+          "    \"Speed_limit\": " +
+          p.Speed_limit +
+          ",\n" +
+          "    \"Road_Type\": " +
+          p.Road_Type +
+          ",\n" +
+          "    \"Light_Conditions\": " +
+          p.Light_Conditions +
+          ",\n" +
+          "    \"Weather_Conditions\": " +
+          p.Weather_Conditions +
+          ",\n" +
+          "    \"Road_Surface_Conditions\": " +
+          p.Road_Surface_Conditions +
+          ",\n" +
+          "    \"Day_of_Week\": " +
+          p.Day_of_Week +
+          ",\n" +
+          "    \"Urban_or_Rural_Area\": " +
+          p.Urban_or_Rural_Area +
+          ",\n" +
+          "    \"Hour\": " +
+          p.Hour +
+          ",\n" +
+          "    \"IsNight\": " +
+          p.IsNight +
+          ",\n" +
+          "    \"Month\": " +
+          p.Month +
+          ",\n" +
+          "}])\n" +
+          "cols = [\"Speed_limit\", \"Road_Type\", \"Light_Conditions\", \"Weather_Conditions\",\n" +
+          "        \"Road_Surface_Conditions\", \"Day_of_Week\", \"Urban_or_Rural_Area\",\n" +
+          "        \"Hour\", \"IsNight\", \"Month\"]\n" +
+          "pred = model.predict(row[cols])[0]\n" +
+          "probs = model.predict_proba(row[cols])[0]\n" +
+          "names = {1: \"Fatal\", 2: \"Serious\", 3: \"Slight\"}\n" +
+          "print(names.get(pred, pred), \"—\", \"Fatal=%.2f Serious=%.2f Slight=%.2f\" % tuple(probs))\n"
+        );
+      }
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var p = getPayload();
+        resultEl.hidden = false;
+        resultCode.hidden = true;
+        resultHint.textContent = "";
+        resultTitle.textContent = "Prediction";
+        resultBody.innerHTML = "Running…";
+
+        if (PREDICT_URL) {
+          try {
+            var res = await fetch(PREDICT_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(p),
+            });
+            if (res.ok) {
+              var data = await res.json();
+              var label = data.label || data.prediction || JSON.stringify(data);
+              resultBody.innerHTML =
+                "Predicted severity: <strong class=\"" +
+                severityClass(String(label)) +
+                '">' +
+                escapeHtml(String(label)) +
+                "</strong>";
+              if (data.detail) resultHint.textContent = data.detail;
+              return;
+            }
+            resultBody.textContent = "API returned " + res.status + ". Showing local Python fallback below.";
+          } catch (err) {
+            resultBody.textContent = "Could not reach prediction API. Use the Python snippet below from the project root.";
+          }
+        } else {
+          resultBody.textContent =
+            "Browser cannot load the trained Random Forest (~685MB joblib). Run the snippet below from the project root to predict with the same features.";
+        }
+
+        resultCode.textContent = buildPythonSnippet(p);
+        resultCode.hidden = false;
+        resultHint.textContent =
+          "Tip: set const PREDICT_URL in index.html if you expose a small POST /predict JSON service that loads 7_rf_model.joblib.";
+      });
+
+      resetBtn.addEventListener("click", function () {
+        form.reset();
+        document.getElementById("Speed_limit").value = "30";
+        document.getElementById("Road_Type").value = "3";
+        document.getElementById("Light_Conditions").value = "1";
+        document.getElementById("Weather_Conditions").value = "1";
+        document.getElementById("Road_Surface_Conditions").value = "1";
+        document.getElementById("Day_of_Week").value = "6";
+        document.getElementById("Urban_or_Rural_Area").value = "1";
+        hourInput.value = "14";
+        document.getElementById("Month").value = "6";
+        isnightAuto.checked = true;
+        setIsNightDisabled(true);
+        syncIsNightFromHour();
+        resultEl.hidden = true;
+      });
+
+      function escapeHtml(s) {
+        return s
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;");
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -15,22 +15,37 @@ def run():
     print(f"Loading filtered base from {in_path}")
     df = pd.read_csv(in_path, low_memory=False)
 
-    # We extract columns specific to our business case predicting severity prior to crashes:
-    # 1. Target: Accident_Severity
-    # 2. Environmental Pre-Crash Variables: Speed_limit, Road_Type, Light_Conditions, 
-    #    Weather_Conditions, Road_Surface_Conditions, Time, Date, Day_of_Week, Urban_or_Rural_Area
-    
+    # Environmental + Geographic pre-crash variables:
+    # Lat/Long provide strong spatial signal for high-risk zones.
+    # Months dropped — temporal granularity within year adds noise not signal.
     required_cols = [
         'Accident_Severity',
-        'Speed_limit', 'Road_Type', 'Light_Conditions', 
-        'Weather_Conditions', 'Road_Surface_Conditions',
-        'Time', 'Date', 'Day_of_Week', 'Urban_or_Rural_Area'
+        # Geographic (strongest predictors)
+        'Latitude', 'Longitude',
+        'Local_Authority_(District)', 'Police_Force',
+        # Road Characteristics
+        'Speed_limit', 'Road_Type',
+        '1st_Road_Class', '1st_Road_Number',
+        '2nd_Road_Class', '2nd_Road_Number',
+        'Junction_Detail', 'Junction_Control',
+        # Environment
+        'Light_Conditions', 'Weather_Conditions',
+        'Road_Surface_Conditions', 'Special_Conditions_at_Site',
+        'Carriageway_Hazards',
+        'Pedestrian_Crossing-Human_Control',
+        'Pedestrian_Crossing-Physical_Facilities',
+        # Temporal (time of day, not month)
+        'Time', 'Day_of_Week',
+        # Area type
+        'Urban_or_Rural_Area',
+        # Lookup-table source columns (dropped before training but used for aggregation)
+        'Number_of_Casualties', 'Number_of_Vehicles',
     ]
 
     # Check which of these actually exist inside the DataFrame
     keep_cols = [c for c in required_cols if c in df.columns]
     
-    print(f"Extracting vital feature columns: {keep_cols}")
+    print(f"Extracting {len(keep_cols)} feature columns: {keep_cols}")
     extracted_df = df[keep_cols].copy()
     
     out_path = os.path.join(output_dir, '4_extracted_data.csv')

@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -8,96 +7,71 @@ import seaborn as sns
 from sklearn.metrics import confusion_matrix
 
 def run():
-    print("\n--- STEP 8: Lifecycle Data Visualization ---")
-    
+    print("\n--- STEP 8: Final Project Visualizations ---")
     base_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(base_dir, 'output')
     
-    x_path = os.path.join(output_dir, '6_X_final.csv')
-    y_path = os.path.join(output_dir, '6_y_final.csv')
+    spatial_path = os.path.join(output_dir, '6_spatial_sample.csv')
     preds_path = os.path.join(output_dir, '7_predictions.csv')
+    fi_path = os.path.join(output_dir, '7_feature_importances.csv')
     
-    if not os.path.exists(preds_path):
-        print(f"Error: Could not find {preds_path}. Run Step 7 first to generate ML predictions.")
-        return
-
-    # Load data
-    print("Loading aggregated CSVs for visual distributions...")
-    X = pd.read_csv(x_path, low_memory=False)
-    y = pd.read_csv(y_path, low_memory=False)['Accident_Severity']
-    preds_df = pd.read_csv(preds_path)
-
-    # We will use Seborn plotting themes for a premium look
     sns.set_theme(style="whitegrid")
     
-    # -------------------------------------------------------------
-    # 1. THE IMBALANCED LANDSCAPE (Target Distribution)
-    # -------------------------------------------------------------
-    print("Generating Chart 1: Imbalanced Target Landscape")
-    plt.figure(figsize=(8, 8))
-    # 1=Fatal, 2=Serious, 3=Slight -> map to text
-    y_labels = y.map({1: 'Fatal', 2: 'Serious', 3: 'Slight'})
-    y_counts = y_labels.value_counts(normalize=True) * 100
-    
-    plt.pie(y_counts, labels=y_counts.index, autopct='%1.1f%%', 
-            colors=['steelblue', 'orange', 'crimson'], startangle=140, explode=[0.05]*len(y_counts))
-    plt.title('Stage: Pre-Processing\nThe Real-World Traffic Accident Imbalance')
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, '8_1_target_imbalance.png'))
-    plt.close()
-
-    # -------------------------------------------------------------
-    # 2. FEATURE CORRELATION HEATMAP
-    # -------------------------------------------------------------
-    print("Generating Chart 2: Feature Correlation Heatmap")
-    plt.figure(figsize=(12, 10))
-    corr = X.corr(method='spearman')
-    # Custom diverging palette
-    cmap = sns.diverging_palette(230, 20, as_cmap=True)
-    sns.heatmap(corr, annot=True, fmt=".2f", cmap=cmap, cbar_kws={"shrink": .8}, linewidths=.5)
-    plt.title('Stage: Aggregation\nEngineered Feature Correlation Map')
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, '8_2_correlation_heatmap.png'))
-    plt.close()
-
-    # -------------------------------------------------------------
-    # 3. TEMPORAL CRASH FREQUENCIES
-    # -------------------------------------------------------------
-    print("Generating Chart 3: Temporal Exploratory Data Analysis")
-    if 'Hour' in X.columns and 'IsNight' in X.columns:
-        plt.figure(figsize=(12, 6))
-        # Overlay KDE for day vs night explicitly to see rush hour shifts
-        sns.kdeplot(data=X, x='Hour', hue='IsNight', fill=True, common_norm=False, palette=['darkorange', 'midnightblue'])
-        plt.title('Stage: Feature Engineering\nAccident Density Spikes by Hour of Day/Night')
-        plt.xlabel('Hour (0-23)')
-        plt.ylabel('Crash Density')
-        plt.xlim(0, 23)
-        plt.xticks(np.arange(0, 24, 2))
-        # Replace 0, 1 with Day, Night
-        plt.legend(title='Condition', labels=['Night (8pm-6am)', 'Daytime'])
+    # 1. Unsupervised Learning Map (DBSCAN/KMeans Clusters)
+    if os.path.exists(spatial_path):
+        print("Generating Chart 1: Geospatial Risk Clusters (Unsupervised Learning)")
+        spatial_df = pd.read_csv(spatial_path)
+        plt.figure(figsize=(8, 10))
+        # Custom color map for severity
+        colors = {'Low': 'mediumseagreen', 'Medium': 'gold', 'High': 'crimson'}
+        for zone in ['Low', 'Medium', 'High']:
+            subset = spatial_df[spatial_df['Risk_Zone'] == zone]
+            plt.scatter(subset['Longitude'], subset['Latitude'], s=2, alpha=0.5, c=colors[zone], label=f'{zone} Risk')
+        
+        plt.title('Unsupervised Geospatial Risk Clustering\n(UK Road Network Map)')
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+        plt.legend(markerscale=5)
         plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, '8_3_temporal_density.png'))
+        plt.savefig(os.path.join(output_dir, '8_1_spatial_risk_map.png'), dpi=150)
         plt.close()
         
-    # -------------------------------------------------------------
-    # 4. MACHINE LEARNING CONFUSION MATRIX
-    # -------------------------------------------------------------
-    print("Generating Chart 4: Machine Learning Predictor Heatmap")
-    plt.figure(figsize=(9, 7))
-    cm = confusion_matrix(preds_df['y_test'], preds_df['y_pred'], labels=[1, 2, 3])
-    
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False, 
-                xticklabels=['Predict: Fatal', 'Predict: Serious', 'Predict: Slight'],
-                yticklabels=['Actual: Fatal', 'Actual: Serious', 'Actual: Slight'])
-    
-    plt.title('Stage: ML Evaluation\nRandom Forest Confusion Matrix Validation')
-    plt.ylabel('True Real-World Class')
-    plt.xlabel('Model Predicted Class')
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, '8_4_ml_confusion_matrix.png'))
-    plt.close()
-
-    print("Successfully generated all 4 analytical milestone figures inside the output/ folder!")
+    # 2. Confusion Matrices Comparison
+    if os.path.exists(preds_path):
+        print("Generating Chart 2: ML Expert Comparison (Confusion Matrices)")
+        preds = pd.read_csv(preds_path)
+        fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+        
+        cm_rf = confusion_matrix(preds['y_test'], preds['y_pred_rf'], labels=[0, 1, 2])
+        sns.heatmap(cm_rf, annot=True, fmt="d", cmap="Blues", ax=axes[0],
+                    xticklabels=['Low', 'Medium', 'High'], yticklabels=['Low', 'Medium', 'High'])
+        axes[0].set_title('Expert 2: Random Forest Classifier')
+        axes[0].set_ylabel('True Risk Zone')
+        axes[0].set_xlabel('Predicted Risk Zone')
+        
+        cm_xgb = confusion_matrix(preds['y_test'], preds['y_pred_xgb'], labels=[0, 1, 2])
+        sns.heatmap(cm_xgb, annot=True, fmt="d", cmap="Oranges", ax=axes[1],
+                    xticklabels=['Low', 'Medium', 'High'], yticklabels=['Low', 'Medium', 'High'])
+        axes[1].set_title('Expert 3: XGBoost Classifier')
+        axes[1].set_xlabel('Predicted Risk Zone')
+        
+        plt.suptitle("Supervised Classification Experts Evaluation")
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, '8_2_model_comparison_cm.png'))
+        plt.close()
+        
+    # 3. Feature Importance
+    if os.path.exists(fi_path):
+        print("Generating Chart 3: Top Environmental Risk Predictors")
+        fi = pd.read_csv(fi_path).head(10)
+        plt.figure(figsize=(10, 6))
+        sns.barplot(data=fi, x='Importance', y='Feature', palette='viridis', hue='Feature', legend=False)
+        plt.title('Top 10 Environmental Predictors of High-Risk Zones\n(XGBoost Feature Importance)')
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, '8_3_feature_importance.png'))
+        plt.close()
+        
+    print("All visualizations successfully generated in output/ folder!")
 
 if __name__ == "__main__":
     run()

@@ -1,6 +1,30 @@
 import os
 import pandas as pd
 
+PIPELINE_SOURCE_COLS = [
+    'Accident_Severity',
+    # Spatial fields retained to build Risk_Zone in Step 6, then dropped before final ML.
+    'Latitude', 'Longitude',
+    'Local_Authority_(District)', 'Police_Force',
+    # Road network structure
+    'Speed_limit', 'Road_Type',
+    '1st_Road_Class', '1st_Road_Number',
+    '2nd_Road_Class', '2nd_Road_Number',
+    'Junction_Detail', 'Junction_Control',
+    # Environment / scene conditions
+    'Light_Conditions', 'Weather_Conditions',
+    'Road_Surface_Conditions', 'Special_Conditions_at_Site',
+    'Carriageway_Hazards',
+    'Pedestrian_Crossing-Human_Control',
+    'Pedestrian_Crossing-Physical_Facilities',
+    # Temporal context used to derive Hour / IsNight / cyclical features
+    'Time', 'Day_of_Week',
+    # Area context
+    'Urban_or_Rural_Area',
+    # Counts retained for clustering-side context and dropped before final model fit
+    'Number_of_Casualties', 'Number_of_Vehicles',
+]
+
 def run():
     print("\n--- STEP 4: Data Extraction ---")
     
@@ -15,37 +39,17 @@ def run():
     print(f"Loading filtered base from {in_path}")
     df = pd.read_csv(in_path, low_memory=False)
 
-    # Environmental + Geographic pre-crash variables:
-    # Lat/Long provide strong spatial signal for high-risk zones.
-    # Months dropped — temporal granularity within year adds noise not signal.
-    required_cols = [
-        'Accident_Severity',
-        # Geographic (strongest predictors)
-        'Latitude', 'Longitude',
-        'Local_Authority_(District)', 'Police_Force',
-        # Road Characteristics
-        'Speed_limit', 'Road_Type',
-        '1st_Road_Class', '1st_Road_Number',
-        '2nd_Road_Class', '2nd_Road_Number',
-        'Junction_Detail', 'Junction_Control',
-        # Environment
-        'Light_Conditions', 'Weather_Conditions',
-        'Road_Surface_Conditions', 'Special_Conditions_at_Site',
-        'Carriageway_Hazards',
-        'Pedestrian_Crossing-Human_Control',
-        'Pedestrian_Crossing-Physical_Facilities',
-        # Temporal (time of day, not month)
-        'Time', 'Day_of_Week',
-        # Area type
-        'Urban_or_Rural_Area',
-        # Lookup-table source columns (dropped before training but used for aggregation)
-        'Number_of_Casualties', 'Number_of_Vehicles',
-    ]
+    # This is the schema handoff into the current risk-zone workflow:
+    # keep only the columns needed for cleansing, spatial clustering, and
+    # engineered-feature creation. Date/month fields are intentionally omitted
+    # because the active plan uses hour-of-day and day-of-week instead.
+    keep_cols = [c for c in PIPELINE_SOURCE_COLS if c in df.columns]
+    missing_cols = [c for c in PIPELINE_SOURCE_COLS if c not in df.columns]
 
-    # Check which of these actually exist inside the DataFrame
-    keep_cols = [c for c in required_cols if c in df.columns]
+    if missing_cols:
+        print(f"Warning: source file is missing expected pipeline columns: {missing_cols}")
     
-    print(f"Extracting {len(keep_cols)} feature columns: {keep_cols}")
+    print(f"Extracting {len(keep_cols)} pipeline columns: {keep_cols}")
     extracted_df = df[keep_cols].copy()
     
     out_path = os.path.join(output_dir, '4_extracted_data.csv')

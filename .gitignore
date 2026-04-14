@@ -3,7 +3,6 @@
 !requirements.txt
 
 # Intermediate Pipeline Outputs and ML Models
-output/
 scratch/
 *.png
 *.joblib

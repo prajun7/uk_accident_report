@@ -304,12 +304,12 @@
 <body>
   <div class="wrap">
     <header>
-      <div class="badge">STATS19 features · Random Forest</div>
-      <h1>Accident severity predictor</h1>
+      <div class="badge">STATS19 features · Multi-model comparison</div>
+      <h1>Accident risk zone predictor</h1>
       <p>
-        Choose road and environment conditions (the same engineered features as in your correlation map), then run a prediction for
-        <strong style="color: #e8edf7">Fatal</strong>, <strong style="color: #e8edf7">Serious</strong>, or <strong style="color: #e8edf7">Slight</strong>
-        severity. Values use UK DfT numeric codes expected by <code style="color: var(--accent)">10_inference.py</code>.
+        Choose the road, junction, lighting, and traffic context used by the current pipeline, then score the scenario as
+        <strong style="color: #e8edf7">Low Risk</strong>, <strong style="color: #e8edf7">Medium Risk</strong>, or <strong style="color: #e8edf7">High Risk</strong>.
+        The page sends raw inputs and the backend rebuilds the engineered features from <code style="color: var(--accent)">6_data_aggregation_representation.py</code>.
       </p>
     </header>
 
@@ -322,10 +322,10 @@
         <div class="card-body">
           <img
             class="heatmap"
-            src="output/8_2_correlation_heatmap.png"
-            alt="Engineered feature correlation heatmap: Speed limit, road type, light, weather, surface, day of week, urban/rural, hour, IsNight, month"
+            src="output/8_2_model_comparison_cm.png"
+            alt="Confusion-matrix comparison across Random Forest, XGBoost, LightGBM, and neural-network risk-zone models"
           />
-          <p class="caption">Inputs below match the variables on the heatmap axes.</p>
+          <p class="caption">This reflects the current four-model evaluation across Random Forest, XGBoost, LightGBM, and the neural network.</p>
         </div>
       </section>
 
@@ -336,40 +336,118 @@
         </div>
         <div class="card-body">
           <form id="predict-form" novalidate>
-            <div class="field">
-              <label for="Speed_limit">Speed limit (mph)</label>
-              <select id="Speed_limit" name="Speed_limit" required>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="30" selected>30</option>
-                <option value="40">40</option>
-                <option value="50">50</option>
-                <option value="60">60</option>
-                <option value="70">70</option>
-              </select>
+            <div class="row-2">
+              <div class="field">
+                <label for="Speed_limit">Speed limit (mph)</label>
+                <select id="Speed_limit" name="Speed_limit" required>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="30">30</option>
+                  <option value="40">40</option>
+                  <option value="50">50</option>
+                  <option value="60" selected>60</option>
+                  <option value="70">70</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="Urban_or_Rural_Area">Urban or rural</label>
+                <select id="Urban_or_Rural_Area" name="Urban_or_Rural_Area" required>
+                  <option value="1" selected>1 — Urban</option>
+                  <option value="2">2 — Rural</option>
+                  <option value="3">3 — Unallocated</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row-2">
+              <div class="field">
+                <label for="Road_Type">Road type</label>
+                <select id="Road_Type" name="Road_Type" required>
+                  <option value="1">1 — Roundabout</option>
+                  <option value="2">2 — Mini roundabout</option>
+                  <option value="3">3 — Single carriageway</option>
+                  <option value="6" selected>6 — Dual carriageway</option>
+                  <option value="7">7 — Slip road</option>
+                  <option value="9">9 — Unknown</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="1st_Road_Class">1st road class</label>
+                <select id="1st_Road_Class" name="1st_Road_Class">
+                  <option value="1">1 — Motorway</option>
+                  <option value="2">2 — A(M)</option>
+                  <option value="3">3 — A</option>
+                  <option value="4">4 — B</option>
+                  <option value="5" selected>5 — C</option>
+                  <option value="6">6 — Unclassified</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row-2">
+              <div class="field">
+                <label for="1st_Road_Number">1st road number</label>
+                <input type="number" id="1st_Road_Number" name="1st_Road_Number" min="0" step="1" value="0" />
+              </div>
+              <div class="field">
+                <label for="2nd_Road_Class">2nd road class</label>
+                <select id="2nd_Road_Class" name="2nd_Road_Class">
+                  <option value="1">1 — Motorway</option>
+                  <option value="2">2 — A(M)</option>
+                  <option value="3">3 — A</option>
+                  <option value="4">4 — B</option>
+                  <option value="5">5 — C</option>
+                  <option value="6" selected>6 — Unclassified / none</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row-2">
+              <div class="field">
+                <label for="2nd_Road_Number">2nd road number</label>
+                <input type="number" id="2nd_Road_Number" name="2nd_Road_Number" min="0" step="1" value="0" />
+              </div>
+              <div class="field">
+                <label for="Day_of_Week">Day of week</label>
+                <select id="Day_of_Week" name="Day_of_Week" required>
+                  <option value="1">1 — Sunday</option>
+                  <option value="2">2 — Monday</option>
+                  <option value="3">3 — Tuesday</option>
+                  <option value="4">4 — Wednesday</option>
+                  <option value="5">5 — Thursday</option>
+                  <option value="6" selected>6 — Friday</option>
+                  <option value="7">7 — Saturday</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row-2">
+              <div class="field">
+                <label for="Hour">Hour (0–23)</label>
+                <input type="number" id="Hour" name="Hour" min="0" max="23" value="18" required />
+              </div>
+              <div class="field">
+                <label for="Light_Conditions">Light conditions</label>
+                <select id="Light_Conditions" name="Light_Conditions" required>
+                  <option value="1" selected>1 — Daylight</option>
+                  <option value="4">4 — Darkness: lights lit</option>
+                  <option value="5">5 — Darkness: lights unlit</option>
+                  <option value="6">6 — Darkness: no lighting</option>
+                  <option value="7">7 — Darkness: unknown lighting</option>
+                </select>
+              </div>
             </div>
 
             <div class="field">
-              <label for="Road_Type">Road type</label>
-              <select id="Road_Type" name="Road_Type" required>
-                <option value="1">1 — Roundabout</option>
-                <option value="2">2 — Mini roundabout</option>
-                <option value="3" selected>3 — Single carriageway</option>
-                <option value="6">6 — Dual carriageway</option>
-                <option value="7">7 — Slip road</option>
-                <option value="9">9 — Unknown</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="Light_Conditions">Light conditions</label>
-              <select id="Light_Conditions" name="Light_Conditions" required>
-                <option value="1" selected>1 — Daylight</option>
-                <option value="4">4 — Darkness: lights lit</option>
-                <option value="5">5 — Darkness: lights unlit</option>
-                <option value="6">6 — Darkness: no lighting</option>
-                <option value="7">7 — Darkness: unknown lighting</option>
-              </select>
+              <label class="toggle">
+                <input type="checkbox" id="isnight-auto" checked />
+                <span>Set <strong>IsNight</strong> automatically from hour (&lt; 6 or ≥ 20)</span>
+              </label>
+              <div class="toggle" style="margin-top: 0.35rem">
+                <input type="checkbox" id="IsNight" name="IsNight" />
+                <span>IsNight (1 = night, 0 = day)</span>
+                <small id="isnight-hint"></small>
+              </div>
             </div>
 
             <div class="row-2">
@@ -394,72 +472,100 @@
                   <option value="2">2 — Wet / damp</option>
                   <option value="3">3 — Snow</option>
                   <option value="4">4 — Frost / ice</option>
-                  <option value="5">5 — Flood (surface water over 3cm)</option>
+                  <option value="5">5 — Flood</option>
                 </select>
               </div>
             </div>
 
             <div class="row-2">
               <div class="field">
-                <label for="Day_of_Week">Day of week</label>
-                <select id="Day_of_Week" name="Day_of_Week" required>
-                  <option value="1">1 — Sunday</option>
-                  <option value="2">2 — Monday</option>
-                  <option value="3">3 — Tuesday</option>
-                  <option value="4">4 — Wednesday</option>
-                  <option value="5">5 — Thursday</option>
-                  <option value="6" selected>6 — Friday</option>
-                  <option value="7">7 — Saturday</option>
+                <label for="Junction_Detail">Junction detail</label>
+                <select id="Junction_Detail" name="Junction_Detail">
+                  <option value="0" selected>0 — Not at junction / unknown</option>
+                  <option value="1">1 — Roundabout</option>
+                  <option value="2">2 — Mini roundabout</option>
+                  <option value="3">3 — T or staggered junction</option>
+                  <option value="5">5 — Slip road</option>
+                  <option value="6">6 — Crossroads</option>
+                  <option value="7">7 — More than 4 arms</option>
+                  <option value="8">8 — Private drive / entrance</option>
+                  <option value="9">9 — Other junction</option>
                 </select>
               </div>
               <div class="field">
-                <label for="Urban_or_Rural_Area">Urban or rural</label>
-                <select id="Urban_or_Rural_Area" name="Urban_or_Rural_Area" required>
-                  <option value="1" selected>1 — Urban</option>
-                  <option value="2">2 — Rural</option>
-                  <option value="3">3 — Unallocated</option>
+                <label for="Junction_Control">Junction control</label>
+                <select id="Junction_Control" name="Junction_Control">
+                  <option value="0">0 — Not at junction / unknown</option>
+                  <option value="1">1 — Authorised person</option>
+                  <option value="2">2 — Auto traffic signal</option>
+                  <option value="3">3 — Stop sign</option>
+                  <option value="4" selected>4 — Give way / uncontrolled</option>
                 </select>
               </div>
             </div>
 
             <div class="row-2">
               <div class="field">
-                <label for="Hour">Hour (0–23)</label>
-                <input type="number" id="Hour" name="Hour" min="0" max="23" value="14" required />
+                <label for="Special_Conditions_at_Site">Special conditions at site</label>
+                <select id="Special_Conditions_at_Site" name="Special_Conditions_at_Site">
+                  <option value="0" selected>0 — None</option>
+                  <option value="1">1 — Auto traffic signal out</option>
+                  <option value="2">2 — Auto signal partially defective</option>
+                  <option value="3">3 — Road sign / marking defective</option>
+                  <option value="4">4 — Roadworks</option>
+                  <option value="5">5 — Road surface defective</option>
+                  <option value="6">6 — Oil or diesel</option>
+                  <option value="7">7 — Mud</option>
+                </select>
               </div>
               <div class="field">
-                <label for="Month">Month</label>
-                <select id="Month" name="Month" required>
-                  <option value="1">January</option>
-                  <option value="2">February</option>
-                  <option value="3">March</option>
-                  <option value="4">April</option>
-                  <option value="5">May</option>
-                  <option value="6" selected>June</option>
-                  <option value="7">July</option>
-                  <option value="8">August</option>
-                  <option value="9">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
+                <label for="Carriageway_Hazards">Carriageway hazards</label>
+                <select id="Carriageway_Hazards" name="Carriageway_Hazards">
+                  <option value="0" selected>0 — None</option>
+                  <option value="1">1 — Vehicle load on road</option>
+                  <option value="2">2 — Other object on road</option>
+                  <option value="3">3 — Involvement with parked vehicle</option>
+                  <option value="6">6 — Pedestrian in carriageway</option>
+                  <option value="7">7 — Animal in carriageway</option>
                 </select>
               </div>
             </div>
 
-            <div class="field">
-              <label class="toggle">
-                <input type="checkbox" id="isnight-auto" checked />
-                <span>Set <strong>IsNight</strong> automatically from hour (&lt; 6 or ≥ 20)</span>
-              </label>
-              <div class="toggle" style="margin-top: 0.35rem">
-                <input type="checkbox" id="IsNight" name="IsNight" />
-                <span>IsNight (1 = night, 0 = day)</span>
-                <small id="isnight-hint"></small>
+            <div class="row-2">
+              <div class="field">
+                <label for="Pedestrian_Crossing-Human_Control">Pedestrian crossing human control</label>
+                <select id="Pedestrian_Crossing-Human_Control" name="Pedestrian_Crossing-Human_Control">
+                  <option value="0" selected>0 — None</option>
+                  <option value="1">1 — Control by school crossing patrol</option>
+                  <option value="2">2 — Control by other authorised person</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="Pedestrian_Crossing-Physical_Facilities">Pedestrian crossing physical facilities</label>
+                <select id="Pedestrian_Crossing-Physical_Facilities" name="Pedestrian_Crossing-Physical_Facilities">
+                  <option value="0" selected>0 — None within 50 metres</option>
+                  <option value="1">1 — Zebra crossing</option>
+                  <option value="4">4 — Pelican / puffin / toucan / similar</option>
+                  <option value="5">5 — Pedestrian phase at signal junction</option>
+                  <option value="7">7 — Footbridge or subway</option>
+                  <option value="8">8 — Central refuge</option>
+                </select>
               </div>
             </div>
+
+            <p class="hint">
+              The model also derives <code>IsRushHour</code>, <code>Hour_Sin</code>, <code>Hour_Cos</code>, <code>DayNight_Context</code>,
+              <code>Urban_Speed_Net</code>, and <code>Junction_Complexity</code> automatically from the inputs above.
+            </p>
+
+            <p class="hint">
+              Demo tip: the defaults are tuned near <code>Medium Risk</code>. Try changing only <code>Urban or rural</code> to
+              <code>2 — Rural</code> for a likely <code>Low Risk</code> result, or lower <code>Speed limit</code> to
+              <code>20</code> or <code>30</code> for a likely <code>High Risk</code> result.
+            </p>
 
             <div class="actions">
-              <button type="submit" class="primary">Predict severity</button>
+              <button type="submit" class="primary">Predict risk zone</button>
               <button type="button" class="secondary" id="reset-btn" title="Reset to defaults">Reset</button>
             </div>
           </form>
@@ -475,14 +581,14 @@
     </div>
 
     <footer>
-      Large models cannot run in the browser; this page can call a local API or show Python you can run with your trained <code>7_rf_model.joblib</code>.
+      Large models cannot run in the browser; this page can call a local API or show Python you can run with your trained <code>7_model_bundle.joblib</code>.
     </footer>
   </div>
 
   <script>
     (function () {
-      /** If you add a small local API, set the full URL here (e.g. http://127.0.0.1:8765/predict). */
-      var PREDICT_URL = "";
+      /** Default to the local predict_server.py route when this page is served by the app. */
+      var PREDICT_URL = "/predict";
 
       var form = document.getElementById("predict-form");
       var hourInput = document.getElementById("Hour");
@@ -533,36 +639,62 @@
         return {
           Speed_limit: parseInt(document.getElementById("Speed_limit").value, 10),
           Road_Type: parseInt(document.getElementById("Road_Type").value, 10),
+          "1st_Road_Class": parseInt(document.getElementById("1st_Road_Class").value, 10),
+          "1st_Road_Number": parseFloat(document.getElementById("1st_Road_Number").value || "0"),
+          "2nd_Road_Class": parseFloat(document.getElementById("2nd_Road_Class").value),
+          "2nd_Road_Number": parseFloat(document.getElementById("2nd_Road_Number").value || "0"),
+          "Junction_Detail": parseFloat(document.getElementById("Junction_Detail").value),
+          "Junction_Control": parseFloat(document.getElementById("Junction_Control").value),
           Light_Conditions: parseInt(document.getElementById("Light_Conditions").value, 10),
           Weather_Conditions: parseFloat(document.getElementById("Weather_Conditions").value),
           Road_Surface_Conditions: parseFloat(document.getElementById("Road_Surface_Conditions").value),
+          "Special_Conditions_at_Site": parseFloat(document.getElementById("Special_Conditions_at_Site").value),
+          "Carriageway_Hazards": parseFloat(document.getElementById("Carriageway_Hazards").value),
+          "Pedestrian_Crossing-Human_Control": parseFloat(document.getElementById("Pedestrian_Crossing-Human_Control").value),
+          "Pedestrian_Crossing-Physical_Facilities": parseFloat(document.getElementById("Pedestrian_Crossing-Physical_Facilities").value),
           Day_of_Week: parseInt(document.getElementById("Day_of_Week").value, 10),
           Urban_or_Rural_Area: parseInt(document.getElementById("Urban_or_Rural_Area").value, 10),
           Hour: hour,
-          IsNight: isnight,
-          Month: parseInt(document.getElementById("Month").value, 10),
+          IsNight: isnight
         };
       }
 
       function severityClass(label) {
-        if (/fatal/i.test(label)) return "sev-fatal";
-        if (/serious/i.test(label)) return "sev-serious";
-        if (/slight/i.test(label)) return "sev-slight";
+        if (/high/i.test(label)) return "sev-fatal";
+        if (/medium/i.test(label)) return "sev-serious";
+        if (/low/i.test(label)) return "sev-slight";
         return "";
       }
 
       function buildPythonSnippet(p) {
         return (
-          "import joblib\n" +
-          "import pandas as pd\n" +
+          "from risk_zone_model import RiskZonePredictor\n" +
           "\n" +
-          "model = joblib.load(\"output/7_rf_model.joblib\")\n" +
-          "row = pd.DataFrame([{\n" +
+          "predictor = RiskZonePredictor()\n" +
+          "payload = {\n" +
           "    \"Speed_limit\": " +
           p.Speed_limit +
           ",\n" +
           "    \"Road_Type\": " +
           p.Road_Type +
+          ",\n" +
+          "    \"1st_Road_Class\": " +
+          p["1st_Road_Class"] +
+          ",\n" +
+          "    \"1st_Road_Number\": " +
+          p["1st_Road_Number"] +
+          ",\n" +
+          "    \"2nd_Road_Class\": " +
+          p["2nd_Road_Class"] +
+          ",\n" +
+          "    \"2nd_Road_Number\": " +
+          p["2nd_Road_Number"] +
+          ",\n" +
+          "    \"Junction_Detail\": " +
+          p["Junction_Detail"] +
+          ",\n" +
+          "    \"Junction_Control\": " +
+          p["Junction_Control"] +
           ",\n" +
           "    \"Light_Conditions\": " +
           p.Light_Conditions +
@@ -572,6 +704,18 @@
           ",\n" +
           "    \"Road_Surface_Conditions\": " +
           p.Road_Surface_Conditions +
+          ",\n" +
+          "    \"Special_Conditions_at_Site\": " +
+          p["Special_Conditions_at_Site"] +
+          ",\n" +
+          "    \"Carriageway_Hazards\": " +
+          p["Carriageway_Hazards"] +
+          ",\n" +
+          "    \"Pedestrian_Crossing-Human_Control\": " +
+          p["Pedestrian_Crossing-Human_Control"] +
+          ",\n" +
+          "    \"Pedestrian_Crossing-Physical_Facilities\": " +
+          p["Pedestrian_Crossing-Physical_Facilities"] +
           ",\n" +
           "    \"Day_of_Week\": " +
           p.Day_of_Week +
@@ -584,18 +728,10 @@
           ",\n" +
           "    \"IsNight\": " +
           p.IsNight +
-          ",\n" +
-          "    \"Month\": " +
-          p.Month +
-          ",\n" +
-          "}])\n" +
-          "cols = [\"Speed_limit\", \"Road_Type\", \"Light_Conditions\", \"Weather_Conditions\",\n" +
-          "        \"Road_Surface_Conditions\", \"Day_of_Week\", \"Urban_or_Rural_Area\",\n" +
-          "        \"Hour\", \"IsNight\", \"Month\"]\n" +
-          "pred = model.predict(row[cols])[0]\n" +
-          "probs = model.predict_proba(row[cols])[0]\n" +
-          "names = {1: \"Fatal\", 2: \"Serious\", 3: \"Slight\"}\n" +
-          "print(names.get(pred, pred), \"—\", \"Fatal=%.2f Serious=%.2f Slight=%.2f\" % tuple(probs))\n"
+          "\n" +
+          "}\n" +
+          "result = predictor.predict(payload)\n" +
+          "print(result[\"label\"], \"-\", result.get(\"detail\", \"\"))\n"
         );
       }
 
@@ -619,7 +755,7 @@
               var data = await res.json();
               var label = data.label || data.prediction || JSON.stringify(data);
               resultBody.innerHTML =
-                "Predicted severity: <strong class=\"" +
+                "Predicted risk zone: <strong class=\"" +
                 severityClass(String(label)) +
                 '">' +
                 escapeHtml(String(label)) +
@@ -629,30 +765,39 @@
             }
             resultBody.textContent = "API returned " + res.status + ". Showing local Python fallback below.";
           } catch (err) {
-            resultBody.textContent = "Could not reach prediction API. Use the Python snippet below from the project root.";
+            resultBody.textContent = "Could not reach the local prediction API. Use the Python snippet below from the project root.";
           }
         } else {
           resultBody.textContent =
-            "Browser cannot load the trained Random Forest (~685MB joblib). Run the snippet below from the project root to predict with the same features.";
+            "Browser cannot run the trained model bundle directly. Run the snippet below from the project root to predict with the same features.";
         }
 
         resultCode.textContent = buildPythonSnippet(p);
         resultCode.hidden = false;
         resultHint.textContent =
-          "Tip: set const PREDICT_URL in index.html if you expose a small POST /predict JSON service that loads 7_rf_model.joblib.";
+          "Tip: run predict_server.py to expose POST /predict and GET /schema with the current model bundle.";
       });
 
       resetBtn.addEventListener("click", function () {
         form.reset();
-        document.getElementById("Speed_limit").value = "30";
-        document.getElementById("Road_Type").value = "3";
+        document.getElementById("Speed_limit").value = "60";
+        document.getElementById("Road_Type").value = "6";
+        document.getElementById("1st_Road_Class").value = "5";
+        document.getElementById("1st_Road_Number").value = "0";
+        document.getElementById("2nd_Road_Class").value = "6";
+        document.getElementById("2nd_Road_Number").value = "0";
+        document.getElementById("Junction_Detail").value = "0";
+        document.getElementById("Junction_Control").value = "4";
         document.getElementById("Light_Conditions").value = "1";
         document.getElementById("Weather_Conditions").value = "1";
         document.getElementById("Road_Surface_Conditions").value = "1";
+        document.getElementById("Special_Conditions_at_Site").value = "0";
+        document.getElementById("Carriageway_Hazards").value = "0";
+        document.getElementById("Pedestrian_Crossing-Human_Control").value = "0";
+        document.getElementById("Pedestrian_Crossing-Physical_Facilities").value = "0";
         document.getElementById("Day_of_Week").value = "6";
         document.getElementById("Urban_or_Rural_Area").value = "1";
-        hourInput.value = "14";
-        document.getElementById("Month").value = "6";
+        hourInput.value = "18";
         isnightAuto.checked = true;
         setIsNightDisabled(true);
         syncIsNightFromHour();

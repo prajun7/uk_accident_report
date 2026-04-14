@@ -1,5 +1,9 @@
+category_encoders
+joblib
+lightgbm
+matplotlib
+numpy
 pandas
 scikit-learn
-matplotlib
 seaborn
-joblib
+xgboost

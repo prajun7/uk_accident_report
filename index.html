@@ -342,10 +342,10 @@
                 <select id="Speed_limit" name="Speed_limit" required>
                   <option value="10">10</option>
                   <option value="20">20</option>
-                  <option value="30" selected>30</option>
+                  <option value="30">30</option>
                   <option value="40">40</option>
                   <option value="50">50</option>
-                  <option value="60">60</option>
+                  <option value="60" selected>60</option>
                   <option value="70">70</option>
                 </select>
               </div>
@@ -365,8 +365,8 @@
                 <select id="Road_Type" name="Road_Type" required>
                   <option value="1">1 — Roundabout</option>
                   <option value="2">2 — Mini roundabout</option>
-                  <option value="3" selected>3 — Single carriageway</option>
-                  <option value="6">6 — Dual carriageway</option>
+                  <option value="3">3 — Single carriageway</option>
+                  <option value="6" selected>6 — Dual carriageway</option>
                   <option value="7">7 — Slip road</option>
                   <option value="9">9 — Unknown</option>
                 </select>
@@ -376,9 +376,9 @@
                 <select id="1st_Road_Class" name="1st_Road_Class">
                   <option value="1">1 — Motorway</option>
                   <option value="2">2 — A(M)</option>
-                  <option value="3" selected>3 — A</option>
+                  <option value="3">3 — A</option>
                   <option value="4">4 — B</option>
-                  <option value="5">5 — C</option>
+                  <option value="5" selected>5 — C</option>
                   <option value="6">6 — Unclassified</option>
                 </select>
               </div>
@@ -424,7 +424,7 @@
             <div class="row-2">
               <div class="field">
                 <label for="Hour">Hour (0–23)</label>
-                <input type="number" id="Hour" name="Hour" min="0" max="23" value="14" required />
+                <input type="number" id="Hour" name="Hour" min="0" max="23" value="18" required />
               </div>
               <div class="field">
                 <label for="Light_Conditions">Light conditions</label>
@@ -556,6 +556,12 @@
             <p class="hint">
               The model also derives <code>IsRushHour</code>, <code>Hour_Sin</code>, <code>Hour_Cos</code>, <code>DayNight_Context</code>,
               <code>Urban_Speed_Net</code>, and <code>Junction_Complexity</code> automatically from the inputs above.
+            </p>
+
+            <p class="hint">
+              Demo tip: the defaults are tuned near <code>Medium Risk</code>. Try changing only <code>Urban or rural</code> to
+              <code>2 — Rural</code> for a likely <code>Low Risk</code> result, or lower <code>Speed limit</code> to
+              <code>20</code> or <code>30</code> for a likely <code>High Risk</code> result.
             </p>
 
             <div class="actions">
@@ -774,9 +780,9 @@
 
       resetBtn.addEventListener("click", function () {
         form.reset();
-        document.getElementById("Speed_limit").value = "30";
-        document.getElementById("Road_Type").value = "3";
-        document.getElementById("1st_Road_Class").value = "3";
+        document.getElementById("Speed_limit").value = "60";
+        document.getElementById("Road_Type").value = "6";
+        document.getElementById("1st_Road_Class").value = "5";
         document.getElementById("1st_Road_Number").value = "0";
         document.getElementById("2nd_Road_Class").value = "6";
         document.getElementById("2nd_Road_Number").value = "0";
@@ -791,7 +797,7 @@
         document.getElementById("Pedestrian_Crossing-Physical_Facilities").value = "0";
         document.getElementById("Day_of_Week").value = "6";
         document.getElementById("Urban_or_Rural_Area").value = "1";
-        hourInput.value = "14";
+        hourInput.value = "18";
         isnightAuto.checked = true;
         setIsNightDisabled(true);
         syncIsNightFromHour();

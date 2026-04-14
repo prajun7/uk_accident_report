@@ -29,39 +29,56 @@ def run():
     # Calculate density (accidents per cluster)
     cluster_counts = df['Cluster'].value_counts()
     
-    # Define Risk Zones based on accident density per cluster
-    # High Risk = Top 15% of clusters by accident volume
-    high_thresh = cluster_counts.quantile(0.85)
-    med_thresh = cluster_counts.quantile(0.50)
+    # Define Risk Zones based on accident density per cluster with GAP ZONES
+    # Low Risk: <35th percentile | Medium: 45th-75th | High: >85th
+    low_thresh = cluster_counts.quantile(0.35)
+    med_min = cluster_counts.quantile(0.45)
+    med_max = cluster_counts.quantile(0.75)
+    high_min = cluster_counts.quantile(0.85)
     
     def assign_risk(count):
-        if count >= high_thresh: return 'High'
-        elif count >= med_thresh: return 'Medium'
-        else: return 'Low'
+        if count >= high_min: return 'High'
+        elif med_min <= count <= med_max: return 'Medium'
+        elif count <= low_thresh: return 'Low'
+        else: return 'Discard' # The Gap Zone
         
     cluster_risk = cluster_counts.apply(assign_risk)
     df['Risk_Zone'] = df['Cluster'].map(cluster_risk)
     
-    print(f"Risk Zone Distribution (Raw):\n{df['Risk_Zone'].value_counts().to_string()}")
+    # Remove nodes in the gap
+    df = df[df['Risk_Zone'] != 'Discard'].copy()
     
-    # Save a small sample of coordinates for Visualization later
-    sample_df = df[['Latitude', 'Longitude', 'Risk_Zone']].copy()
-    sample_df['Risk_Zone'] = sample_df['Risk_Zone'].fillna('Unknown') # Safe drop
-    sample_df = sample_df[sample_df['Risk_Zone'] != 'Unknown']
-    sample_df.sample(n=min(50000, len(sample_df)), random_state=42).to_csv(
-        os.path.join(output_dir, '6_spatial_sample.csv'), index=False
-    )
+    print(f"Risk Zone Distribution (Filtered with Gaps):\n{df['Risk_Zone'].value_counts().to_string()}")
     
-    # 2. Feature Engineering (Environmental & Infrastructural)
-    # We deliberately drop geography so the ML models MUST learn the pure environmental signature!
-    drop_cols = ['Latitude', 'Longitude', 'Local_Authority_(District)', 'Police_Force', 
-                 'Accident_Severity', 'Cluster', 'Number_of_Casualties', 'Number_of_Vehicles']
+    # 2. Advanced Feature Engineering
+    print("Engineering interaction features (Urban_Speed, IsRushHour, Junction_Complexity)...")
     
     if 'Time' in df.columns:
         df['Hour'] = pd.to_datetime(df['Time'], format='%H:%M', errors='coerce').dt.hour
         df['Hour'] = df['Hour'].fillna(df['Hour'].median())
         df['IsNight'] = ((df['Hour'] < 6) | (df['Hour'] >= 20)).astype(int)
-        drop_cols.append('Time')
+        # FEATURE: Rush Hour Flag
+        df['IsRushHour'] = df['Hour'].apply(lambda x: 1 if x in [7,8,9,17,18,19] else 0)
+        
+    # FEATURE: Urban Speed Intensity
+    if 'Urban_or_Rural_Area' in df.columns and 'Speed_limit' in df.columns:
+        df['Urban_Speed_Net'] = df['Urban_or_Rural_Area'] * df['Speed_limit']
+        
+    # FEATURE: Junction complexity
+    if 'Junction_Detail' in df.columns and 'Junction_Control' in df.columns:
+        df['Junction_Complexity'] = df['Junction_Detail'] + df['Junction_Control']
+
+    # Save a small sample of coordinates for Visualization later
+    sample_df = df[['Latitude', 'Longitude', 'Risk_Zone']].copy()
+    # Mask out the "Discard" nodes (already filtered, but for safety)
+    sample_df = sample_df[sample_df['Risk_Zone'] != 'Discard']
+    sample_df.sample(n=min(50000, len(sample_df)), random_state=42).to_csv(
+        os.path.join(output_dir, '6_spatial_sample.csv'), index=False
+    )
+    
+    # We deliberately drop geography so the ML models MUST learn the pure environmental signature!
+    drop_cols = ['Latitude', 'Longitude', 'Local_Authority_(District)', 'Police_Force', 
+                 'Accident_Severity', 'Cluster', 'Number_of_Casualties', 'Number_of_Vehicles', 'Time']
         
     df.drop(columns=[c for c in drop_cols if c in df.columns], inplace=True)
     df.dropna(subset=['Risk_Zone'], inplace=True)

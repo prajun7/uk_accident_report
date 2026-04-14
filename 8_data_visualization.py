@@ -36,30 +36,38 @@ def run():
         plt.savefig(os.path.join(output_dir, '8_1_spatial_risk_map.png'), dpi=150)
         plt.close()
         
-    # 2. Confusion Matrices Comparison
+    # 2. Confusion Matrices Comparison (The Triple Experts)
     if os.path.exists(preds_path):
-        print("Generating Chart 2: ML Expert Comparison (Confusion Matrices)")
+        print("Generating Chart 2: Triple Expert Comparison (Confusion Matrices)")
         preds = pd.read_csv(preds_path)
-        fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+        fig, axes = plt.subplots(1, 3, figsize=(18, 6))
         
+        # Expert 2: RF
         cm_rf = confusion_matrix(preds['y_test'], preds['y_pred_rf'], labels=[0, 1, 2])
-        sns.heatmap(cm_rf, annot=True, fmt="d", cmap="Blues", ax=axes[0],
+        sns.heatmap(cm_rf, annot=True, fmt="d", cmap="Blues", ax=axes[0], cbar=False,
                     xticklabels=['Low', 'Medium', 'High'], yticklabels=['Low', 'Medium', 'High'])
-        axes[0].set_title('Expert 2: Random Forest Classifier')
+        axes[0].set_title('Expert 2: Random Forest')
         axes[0].set_ylabel('True Risk Zone')
         axes[0].set_xlabel('Predicted Risk Zone')
         
+        # Expert 3: XGB
         cm_xgb = confusion_matrix(preds['y_test'], preds['y_pred_xgb'], labels=[0, 1, 2])
-        sns.heatmap(cm_xgb, annot=True, fmt="d", cmap="Oranges", ax=axes[1],
+        sns.heatmap(cm_xgb, annot=True, fmt="d", cmap="Oranges", ax=axes[1], cbar=False,
                     xticklabels=['Low', 'Medium', 'High'], yticklabels=['Low', 'Medium', 'High'])
-        axes[1].set_title('Expert 3: XGBoost Classifier')
+        axes[1].set_title('Expert 3: XGBoost')
         axes[1].set_xlabel('Predicted Risk Zone')
+
+        # Expert 4: LightGBM (The Leader)
+        cm_lgbm = confusion_matrix(preds['y_test'], preds['y_pred_lgbm'], labels=[0, 1, 2])
+        sns.heatmap(cm_lgbm, annot=True, fmt="d", cmap="Greens", ax=axes[2], cbar=False,
+                    xticklabels=['Low', 'Medium', 'High'], yticklabels=['Low', 'Medium', 'High'])
+        axes[2].set_title('Expert 4: LightGBM (Best)')
+        axes[2].set_xlabel('Predicted Risk Zone')
         
-        plt.suptitle("Supervised Classification Experts Evaluation")
-        plt.tight_layout()
+        plt.suptitle("Multi-Expert Risk Prediction Validation (Accuracy Upgrade)")
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         plt.savefig(os.path.join(output_dir, '8_2_model_comparison_cm.png'))
-        plt.close()
-        
+        plt.close()        
     # 3. Feature Importance
     if os.path.exists(fi_path):
         print("Generating Chart 3: Top Environmental Risk Predictors")
